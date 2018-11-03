@@ -1,14 +1,28 @@
 
-public class Bloque31 implements Runnable {
-	private static int cont = 0;
+public class Bloque32 implements Runnable {
+
+	private int id;
 	private static Object cerrojo = new Object();
-	@Override
+	private static int cont = 0;
+	
+	public Bloque32(int id) {
+		this.id = id;
+	}
+	
 	public void run() {
 		synchronized(cerrojo){
-		for (int i = 0; i < 20000; i++) {
-			//sección crítica 
-			cont++;
+			//debe hacerse con un while porque si lo hacemos con un if cuando el notifyAll lo despierte
+			//coninuará a partir del wait 
+			while(id != cont) {
+				try {
+					cerrojo.wait(); //duerme a los hilos en la cola del cerrojo
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			System.out.println("Soy el hilo: " + id);
+			cont++;
+			cerrojo.notifyAll(); //despierta a los hilos que duermen en la cola del cerrojo
 		}
 		
 	}
@@ -22,7 +36,7 @@ public class Bloque31 implements Runnable {
 		Thread[] hilos = new Thread[nNucleos];
 		
 		for(int i = 0; i < hilos.length; i++) {
-			Runnable runnable = new Bloque31();
+			Runnable runnable = new Bloque32(i);
 			hilos[i] = new Thread(runnable);
 			hilos[i].start();
 		}
@@ -34,9 +48,9 @@ public class Bloque31 implements Runnable {
 			}catch(Exception EX) {}
 		}
 		tiempo_final = System.nanoTime() - tiempo_inicio; 
-		
+		System.out.println("Soy el hilo principal");
 		System.out.println((tiempo_final/1000000) + " milisegundos");
-		System.out.println(cont);
+		
 	}
 
 }
